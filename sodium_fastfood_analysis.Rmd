@@ -1,0 +1,232 @@
+---
+title: 'IMT 573: Module 5 Lab'
+subtitle: 'Data Analysis'
+author: "Roberto Infante"
+date: 'Due: Jul 23, 2023'
+output: 
+  pdf_document:
+    includes:
+      in_header: "preamble.tex"
+---
+
+### Objectives
+
+In this lab exercise you will drive your own data analysis and data science report. Your job is to develop a question to pursue and use data to support some preliminary conclusions. You should also find time to reflect on your results and identify possible errors or concerns you have about the data and analysis. 
+
+
+```{r Setup, message=FALSE}
+# Load standard libraries
+library(tidyverse)
+library(openintro)
+library(knitr) # this will keep code on the page!
+opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
+```
+
+### Data
+
+In this lab we will be working with data from fast food restaurants. This dataset contains nutritional information for 515 menu items from some of the most popular fast food restaurants worldwide. You can use the follow code to load and inspect this data. 
+
+```{r load the fastfood data, message = FALSE}
+# Load data and inspect it
+data(fastfood)
+ls()
+
+glimpse(fastfood)
+head(fastfood)
+```
+Check if there are repeated items in data
+
+```{r}
+fastfood %>%
+  group_by(restaurant, item) %>%
+  summarise(count_of_restaurant_item = n()) %>%
+  filter(count_of_restaurant_item > 1)
+```
+We have two items which are repeated in the dataframe
+
+Check if variables are the same
+```{r}
+fastfood %>%
+  filter(restaurant == "Taco Bell") %>%
+  filter(item == "Chili Cheese Burrito" | item == "Express Taco Salad w/ Chips")
+```
+They are the same so we can delete the duplicates. 
+
+
+Creating a new dataframe with no repeated items
+```{r}
+distinct_fastfood <- fastfood %>%
+  distinct()
+dim(distinct_fastfood)
+```
+
+Looking for null values
+```{r}
+summary(distinct_fastfood)
+```
+There are some rows with NAs in protein, fiber, vit_a, vit_c, and calcium. 
+```{r}
+distinct_fastfood %>% filter_all(any_vars(is.na(.)))
+```
+
+
+Here we can see that the NAs are not sporadic among rows. The row which have NA for some variable looks like they also have NA in a different one. I want to know how many observations have NAs from each restaurant. 
+```{r}
+
+# Check how many items per restaurant
+restaurant_items <- distinct_fastfood %>%
+  group_by(restaurant) %>%
+  summarise(num_of_items = n())
+
+# Check NAs on any column per restaurant
+restaurant_NAs <- distinct_fastfood %>%
+  filter_all(any_vars(is.na(.))) %>%
+  group_by(restaurant) %>%
+  summarise(rows_with_NA = n())
+
+restaurant_items_NA <- restaurant_items %>%
+  left_join(restaurant_NAs, by = "restaurant")
+
+restaurant_items_NA
+```
+
+
+
+### Problem 1: Formulate a Question
+
+#### Background and problem statement
+According to the FDA(Food and Drug Administration), Americans eat too much sodium. The Centers for Disease Control and Prevention says that Americans consume more than 3,400 mg of sodium per day on average. Diets higher in sodium are associated with an increased risk in developing high blood pressure which can lead to heart diseases and strokes. 
+
+#### Data Science Question
+##### What are the fastfood options which use less sodium in their food in order for predisposed people to heart disease to be able to eat at those places?
+
+### Problem 2: Data Analysis
+
+Next, practice using your data science skills to answer you question. Follow the steps below in your data science process. In your analysis, use at least one data visualization to help you communicate your findings. 
+
+#### (a) Try the Easy Solution First
+From the previous EDA we saw there are no NAs in sodium column. 
+
+Check the distribution of sodium in items
+```{r}
+summary(distinct_fastfood$sodium)
+```
+
+```{r}
+ggplot(distinct_fastfood, aes(x = sodium)) +
+  geom_histogram(binwidth = 100) +
+  ggtitle("Amount of items in calories range") +
+  xlab("Sodium") + ylab("Items")
+  
+```
+This looks like a normal distribution with some outliers to the right. Two data points are noisy because we do not know if they are errors or outliers. Let's see the items with 0 mg of sodium and the ones with more than 4000. 
+
+```{r}
+distinct_fastfood %>%
+  filter(sodium == 0 | sodium > 4000)
+
+```
+The data makes sense and looks accurate.
+
+
+```{r}
+ggplot(distinct_fastfood, aes(x = sodium, fill = restaurant)) +
+  geom_density(alpha = .5)
+```
+
+Box plot for all the restaurants.
+```{r}
+ggplot(distinct_fastfood, aes(x = restaurant, y = sodium)) +
+  geom_boxplot()
+```
+They all appear to have normal distributions except Arbys which looks like it has bimodal distribution where we could have two types of food groups. 
+
+```{r}
+distinct_fastfood %>%
+  group_by(restaurant) %>%
+  summarise(mean_sodium_mg = mean(sodium), median_sodium_mg = median(sodium), standard_dev_sodium = sd(sodium), num_of_items = n()) %>%
+  arrange(median_sodium_mg)
+```
+
+I thought that McDonalds was going to be the worst option due to their high sodium food but looking at the median we can see that they offer other food options with less sodium.
+
+
+#### Conclusion for easy solution
+The best restaurant to eat if in order to ingest less sodium is Taco Bell. They have 113 items and the median and mean sodium is the lowest among fast food restaurants. Chick fill a comes second by just a median difference of 40 sodium mg and since we just have 27 items, the variability is higher so we should not rule out eating in Chick Fil-A.
+
+
+####(b) Challenge Your Solution
+From chatGPT on sodium-to-calorie ratio: 
+High ratio: If a food or meal has a high sodium-to-calorie ratio, it means it contains a significant amount of sodium relative to the number of calories it provides. This can be a concern because it indicates that the food may be high in salt and may contribute to excessive sodium intake if consumed regularly.
+
+Low ratio: A low sodium-to-calorie ratio suggests that the food or meal contains relatively less sodium compared to the number of calories it provides. Foods with a lower ratio are generally healthier choices, especially when combined with other nutrient-dense foods.
+
+While the sodium-to-calorie ratio can provide some helpful information about the salt content of a food, it is crucial to consider other aspects of nutrition, such as the overall nutrient profile, including vitamins, minerals, and macronutrients (carbohydrates, proteins, and fats). Additionally, focusing on a balanced and varied diet that includes whole, unprocessed foods is essential for promoting overall health and well-being.
+
+Creating sodium-to-calorie ratio statistic
+```{r}
+# Create new dataframe
+distinct_fastfood_sodium_cal_ratio <- distinct_fastfood
+
+distinct_fastfood_sodium_cal_ratio$sodium_to_calorie <- distinct_fastfood_sodium_cal_ratio$sodium / distinct_fastfood_sodium_cal_ratio$calories
+
+head(distinct_fastfood_sodium_cal_ratio)
+
+```
+
+```{r}
+ggplot(distinct_fastfood_sodium_cal_ratio, aes(x = sodium_to_calorie, fill = restaurant)) +
+  geom_density(alpha = 0.5) +
+  xlim(0, 5)
+```
+These are the statistics for the ratio in mg/cal
+
+```{r}
+distinct_fastfood_sodium_cal_ratio %>%
+  group_by(restaurant) %>%
+  summarise(mean_scr = mean(sodium_to_calorie), median_str = median(sodium_to_calorie), standard_dev_str = sd(sodium_to_calorie), num_of_items = n()) %>%
+  arrange(median_str)
+```
+The standard deviation from Sonic looks a little bit odd so we would give it a look.
+
+```{r}
+sonic_data <- distinct_fastfood_sodium_cal_ratio %>%
+  filter(restaurant == "Sonic")
+
+ggplot(sonic_data, aes(x = sodium_to_calorie)) +
+  geom_histogram(binwidth = 1)
+
+
+```
+
+```{r}
+distinct_fastfood_sodium_cal_ratio %>%
+  filter(restaurant == "Sonic") %>%
+  filter(sodium_to_calorie > 20)
+```
+This looks like a typo so we are getting rid of that.
+
+```{r}
+distinct_fastfood_sodium_cal_ratio %>%
+  filter(sodium_to_calorie < 10) %>%
+  group_by(restaurant) %>%
+  summarise(mean_scr = mean(sodium_to_calorie), median_str = median(sodium_to_calorie), standard_dev_str = sd(sodium_to_calorie), num_of_items = n()) %>%
+  arrange(median_str)
+```
+It now makes sense and we have Sonic still in second position. 
+
+#### Conclusion:
+From my first analysis I stated that eating at taco bell is the healthiest for people who are choosing between the 8 restaurants. But now in the second analysis after reviewing the "sodium_to_calorie_ratio" to understand better how much salt the item has, I realized that Burger King is the restaurant with the healthiest would be Burger King but it is not really healthy as the ratio is 1 mg per calorie and the median of this restaurant is 2.
+
+
+####(c) What Next?
+
+We understand that sodium in high amount of quantities is bad and from the past analysis we saw that the best restaurant for people taking care of their heart health is Taco Bell. This is good if we care just on items and how many sodium they contain. But the main reason that we go to a restaurant is because we are hungry. So we can eat in a fastfood place and ask for the item with low sodium but that might not be enough. So what makes you less hungry?
+
+Fiber is a type of carbohydrate that the body can't digest so it cannot be broken down into sugar molecules. This helps to keep hunger and blood sugar in check. Children and adults need 25 to 35 grams of fiber per day for good health according to Harvard school of public health. Among the benefits of fiber it appears it lowers the risk for hearth disease being paramount for people with hearth problems. 
+
+- One thing I would like to do is to statistically determine if Burger King is the healthiest restaurant but for this we would need o have more data and group by type of food. 
+
+- A balanced diet is important and we could eat fastfood but making sure that we are eating other healthier food to keep the balance. For next research it would be good if we can implement the 2 for 1 meal where fastfood chains give you two meals so that you can enjoy your non healthy meal without feeling too bad later. This could be a combination of a high-calorie-high-sodium food with other foods that could counter the high intakes of certain substance or element.
+
+

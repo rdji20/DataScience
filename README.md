@@ -10,6 +10,7 @@ These are my projects for Data Science and Machine Learning:
 - bump_Recsys
 - bump_food_drinks
 - content_based_filtering_with_LLM
+- sodium_fastfood_analysis
 
   
 
@@ -52,6 +53,8 @@ Web scrapper to gather information of local business in the industry of food and
 After research on GPT-3 and word embeddings, I decided to change LDA for OpenAI word embeddings as recommendation system. Using user's prompt on things they like as the starting point for recommendation which simiilarity would be coomputed against cards' words embeddings.
 <br>
 
+## sodium_fastfood_analysis
+Laboratory excercise for Data Science masters for descriptive statistics on the usage of sodium (salt) for different items in fastfood chains like McDonalds and ChickFilA to understand if we can determine healthier fastfood by having the premise of salt being unhealthy for people with high blood pressure. 
 
 
 

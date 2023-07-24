@@ -54,7 +54,7 @@ After research on GPT-3 and word embeddings, I decided to change LDA for OpenAI 
 <br>
 
 ## sodium_fastfood_analysis
-Published html [RPubs Fastfood Analysis](https://rpubs.com/rdji20/1065475)).
+Published html [RPubs Fastfood Analysis](https://rpubs.com/rdji20/1065475). <br>
 Laboratory excercise for Data Science masters for descriptive statistics on the usage of sodium (salt) for different items in fastfood chains like McDonalds and ChickFilA to understand if we can determine healthier fastfood by having the premise of salt being unhealthy for people with high blood pressure. 
 
 

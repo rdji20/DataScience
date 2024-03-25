@@ -2,17 +2,19 @@
 These are my projects for Data Science and Machine Learning:
 
 ## Table of contents:
+- a_LDA_Recommendation_System.ipynb
 - prompt_engineering_opia 
 - Recommendation_Xperience_Research
 - Poor_mood_analysis
 - UserAcquisitionBump
 - WebScrapperCards
-- bump_Recsys
 - bump_food_drinks
 - content_based_filtering_with_LLM
 - sodium_fastfood_analysis
 
-  
+## a_LDA_Recommendation_System.ipynb
+Recommendation system using of Latent Dirichlet Allocation for category matching. 
+<br>
 
 ## prompt_engineering_opia
 Bot creation with obstetrics hospital in Mexico for pregnancy triage using Microsoft Semantic Kernel. This is an ongoing project as of 06/20/2023.  
@@ -36,11 +38,6 @@ Analysis to understand startup user acquisition model to see how much it will co
 
 ## WebScrapperCards
 Naive bot to scrape local businesses information for startup recommendations
-<br>
-
-
-## bump_Recsys
-Creation of different approaches to mitigate zero shot recommendaton problem. Usage of Latent Dirichlet Allocation (LDA), and TF IDF.
 <br>
 
 
